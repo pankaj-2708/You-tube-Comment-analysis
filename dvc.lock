@@ -1,0 +1,20 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python ./src/dvc_pipeline/0_preprocess.py
+    deps:
+    - path: ./src/dvc_pipeline/0_preprocess.py
+      hash: md5
+      md5: 9fffade92e287a702dd924d97c115048
+      size: 6678
+    params:
+      params.yaml:
+        preprocess.char_per_words: true
+        preprocess.comment_len: true
+        preprocess.word_count: true
+    outs:
+    - path: ./data/processed/
+      hash: md5
+      md5: b09ae8da10346ac9c10e11751b797e75.dir
+      size: 2735813
+      nfiles: 1

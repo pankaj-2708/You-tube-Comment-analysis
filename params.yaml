@@ -1,0 +1,11 @@
+preprocess:
+  comment_len: True
+  word_count: True
+  char_per_words: True
+
+transform:
+  standardise: True
+  no_of_features: 500
+  ngram_range: 1,2
+  test_size: 0.2
+  count_vec: True
