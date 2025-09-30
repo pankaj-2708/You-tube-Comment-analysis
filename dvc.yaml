@@ -21,25 +21,18 @@ stages:
     - transform.standardise
     outs:
     - ./data/transformed/
-  # train_test_split:
-  #   cmd: python ./src/dvc_pipeline/2_train_test_split.py
-  #   deps:
-  #   - ./src/dvc_pipeline/2_train_test_split.py
-  #   params:
-  #   - dataset.test_size
-  #   - dataset.random_state
-  #   outs:
-  #   - ./data/train_test_split/
-  # model:
-  #   cmd: python ./src/dvc_pipeline/3_model.py
-  #   deps:
-  #   - ./src/dvc_pipeline/3_model.py
-  #   params:
-  #   - model.try_model
-  #   - model.tune_gradient_boosting
-  #   - model.tune_random_forest
-  #   - model.tune_XGBoost
-  #   - model.tune_light_boost
+  model:
+    cmd: python ./src/dvc_pipeline/2_model.py
+    deps:
+    - ./src/dvc_pipeline/2_model.py
+    outs:
+    - ./models/
+    # params:
+    # - model.try_model
+    # - model.tune_gradient_boosting
+    # - model.tune_random_forest
+    # - model.tune_XGBoost
+    # - model.tune_light_boost
   # best_model:
   #   cmd: python ./src/dvc_pipeline/4_save_best_model.py
   #   deps:

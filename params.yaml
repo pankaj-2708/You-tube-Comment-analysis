@@ -5,7 +5,7 @@ preprocess:
 
 transform:
   standardise: True
-  no_of_features: 500
+  no_of_features: 1000
   ngram_range: 1,2
   test_size: 0.2
   count_vec: True
