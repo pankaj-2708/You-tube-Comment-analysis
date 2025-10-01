@@ -2,7 +2,6 @@ import pandas as pd
 from pathlib import Path
 import pickle
 import yaml
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler,MinMaxScaler,OrdinalEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
@@ -23,7 +22,8 @@ def vectorisation(df,no_of_features,ngram_range,output_path,count_ve):
     if count_ve:
         count_vec=CountVectorizer(max_features=no_of_features,ngram_range=(int(ngram_range.split(",")[0]),int(ngram_range.split(",")[1])))
     else:
-        count_vec=TfidfVectorizer(max_features=no_of_features,ngram_range=ngram_range)
+        count_vec=TfidfVectorizer(max_features=no_of_features,
+                                  ngram_range=(int(ngram_range.split(",")[0]),int(ngram_range.split(",")[1])))
         
     bag_of_words=count_vec.fit_transform(df['Comment'])
     bag_of_words=pd.DataFrame(bag_of_words.toarray(),columns=count_vec.get_feature_names_out())
@@ -59,11 +59,7 @@ def transform(df,standardise,output_path):
     df=pd.DataFrame(clm.fit_transform(df),columns=clm.get_feature_names_out())
     return df
 
-def split(df,output_path,test_size):
-    train,test=train_test_split(df,test_size=test_size)
-    save_data(train,output_path / 'train.csv')
-    save_data(test,output_path / 'test.csv')
-    
+
 
 def main():
     curr_path = Path(__file__)
@@ -79,7 +75,7 @@ def main():
     
     df=vectorisation(df,params['no_of_features'],params['ngram_range'],output_path,params['count_vec'])
     df=transform(df,params['standardise'],output_path)
-    df=split(df,output_path,params['test_size'])
+    save_data(df,output_path/"transformed.csv")
     
 if __name__=="__main__":
     main()

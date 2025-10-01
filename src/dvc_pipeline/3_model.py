@@ -8,6 +8,7 @@ from xgboost import XGBClassifier
 from sklearn.model_selection import cross_val_score
 import dagshub
 import mlflow
+import yaml
 from pathlib import Path
 dagshub.init(repo_owner='pankaj-2708', repo_name='You-tube-Comment-analysis', mlflow=True)
 
@@ -20,16 +21,20 @@ def load_data(input_path):
 def save_data(df, output_path):
     df.to_csv(output_path , index=False)
 
-def try_models(X, y, test_X,test_y, add_info=""):
+def try_models(X, y, test_X,test_y,no_of_features,ngram_range,count_ve,over_sampling_tech, add_info=""):
     for name, model in [
-        (f"xgboost {add_info}", XGBClassifier(device='gpu')),
-        (f"random_forest {add_info}", RandomForestClassifier(n_jobs=-1)),
+        # (f"xgboost {add_info}", XGBClassifier(device='gpu')),
+        # (f"random_forest {add_info}", RandomForestClassifier(n_jobs=-1)),
         # (f"gradient_boosting {add_info}", GradientBoostingClassifier()),
-        (f"lgm {add_info}", LGBMClassifier(boosting_type="goss",n_jobs=-1)),
-        (f"cbr {add_info}", CatBoostClassifier(devices='gpu'))
+        # (f"cbr {add_info}", CatBoostClassifier(devices='gpu')),
+        (f"lgm {add_info}", LGBMClassifier(boosting_type="goss",n_jobs=-1))
     ]:
         with mlflow.start_run():
             mlflow.log_param("model", name)
+            mlflow.log_param("over_sampling_tech", over_sampling_tech)
+            mlflow.log_param("no of features", no_of_features)
+            mlflow.log_param("ngram_range", ngram_range)
+            mlflow.log_param("count_vectoriser", count_ve)
 
             model_ = model
 
@@ -49,12 +54,13 @@ def try_models(X, y, test_X,test_y, add_info=""):
 def main():
     curr_path = Path(__file__)
     home_dir = curr_path.parent.parent.parent
-    input_path = home_dir / "data" / "transformed"
+    input_path = home_dir / "data" / "train_test_split"
     output_path = home_dir / "models"
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # with open(home_dir / "params.yaml", "r") as f:
-    #     params = yaml.safe_load(f)["transform"]
+    with open(home_dir / "params.yaml", "r") as f:
+        params = yaml.safe_load(f)["transform"]
+        params2 = yaml.safe_load(f)["imb"]
         
     train = load_data(input_path / "train.csv")
     test = load_data(input_path / "test.csv")
@@ -63,7 +69,7 @@ def main():
     test_X=test.drop(columns=['lb__Sentiment'])
     test_y=test['lb__Sentiment']
 
-    try_models(X,y,test_X,test_y)
+    try_models(X,y,test_X,test_y,params['no_of_features'],params['ngram_range'],params['count_vec'],params['over_sampling_tech'])
     
 if __name__=="__main__":
     main()

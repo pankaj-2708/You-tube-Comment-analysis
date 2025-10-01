@@ -11,20 +11,29 @@ stages:
     - ./data/processed/
 
   transform:
-    cmd: python ./src/dvc_pipeline/1_vetorisation_train_test_split.py
+    cmd: python ./src/dvc_pipeline/1_vetorisation.py
     deps:
-    - ./src/dvc_pipeline/1_vetorisation_train_test_split.py
+    - ./src/dvc_pipeline/1_vetorisation.py
     params:
-    - transform.test_size
     - transform.ngram_range
     - transform.no_of_features
     - transform.standardise
     outs:
     - ./data/transformed/
-  model:
-    cmd: python ./src/dvc_pipeline/2_model.py
+
+  imb:
+    cmd: python ./src/dvc_pipeline/2_imb_handling.py
     deps:
-    - ./src/dvc_pipeline/2_model.py
+    - ./src/dvc_pipeline/2_imb_handling.py
+    params:
+    - imb.test_size
+    outs:
+    - ./data/train_test_split/
+
+  model:
+    cmd: python ./src/dvc_pipeline/3_model.py
+    deps:
+    - ./src/dvc_pipeline/3_model.py
     outs:
     - ./models/
     # params:

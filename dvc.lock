@@ -19,21 +19,36 @@ stages:
       size: 2735813
       nfiles: 1
   transform:
-    cmd: python ./src/dvc_pipeline/1_vetorisation_train_test_split.py
+    cmd: python ./src/dvc_pipeline/1_vetorisation.py
     deps:
-    - path: ./src/dvc_pipeline/1_vetorisation_train_test_split.py
+    - path: ./src/dvc_pipeline/1_vetorisation.py
       hash: md5
-      md5: a03c5847884d9a535019fb1ff040a2cb
-      size: 2834
+      md5: 2896e8769530484311a535c91e03b7ca
+      size: 2674
     params:
       params.yaml:
         transform.ngram_range: 1,2
-        transform.no_of_features: 500
-        transform.standardise: true
-        transform.test_size: 0.2
+        transform.no_of_features: 2000
+        transform.standardise: false
     outs:
     - path: ./data/transformed/
       hash: md5
-      md5: 6193865eb8b8ed306980a69dad32296e.dir
-      size: 38475026
-      nfiles: 4
+      md5: 52f6b0c18ebb3e27b1dfd7bdaa28e983.dir
+      size: 145092646
+      nfiles: 3
+  imb:
+    cmd: python ./src/dvc_pipeline/2_imb_handling.py
+    deps:
+    - path: ./src/dvc_pipeline/2_imb_handling.py
+      hash: md5
+      md5: baef7a59da446d32c15ae249acaf1705
+      size: 1767
+    params:
+      params.yaml:
+        imb.test_size: 0.2
+    outs:
+    - path: ./data/train_test_split/
+      hash: md5
+      md5: a70e727cda009b8ea79afcac06a17e17.dir
+      size: 271899099
+      nfiles: 2
