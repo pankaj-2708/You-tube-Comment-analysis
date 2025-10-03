@@ -6,8 +6,21 @@ preprocess:
 imb:
   test_size: 0.2
   over_sampling_tech: SMOTE
+  
+  
 transform:
   standardise: False
   no_of_features: 2000
   ngram_range: 1,2
   count_vec: True
+
+model:
+  tune_xgb: False
+  tune_rf: False
+  try_models: False
+
+dl:
+  model: False
+
+register_model:
+  register: True

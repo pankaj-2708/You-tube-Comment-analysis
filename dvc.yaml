@@ -34,17 +34,20 @@ stages:
     cmd: python ./src/dvc_pipeline/3_model.py
     deps:
     - ./src/dvc_pipeline/3_model.py
-    outs:
-    - ./models/
-    # params:
-    # - model.try_model
-    # - model.tune_gradient_boosting
-    # - model.tune_random_forest
-    # - model.tune_XGBoost
-    # - model.tune_light_boost
-  # best_model:
-  #   cmd: python ./src/dvc_pipeline/4_save_best_model.py
-  #   deps:
-  #   - ./src/dvc_pipeline/4_save_best_model.py
-  #   outs:
-  #   - ./model/
+    params:
+    - model.tune_xgb
+    - model.tune_rf
+    - model.try_models
+  dl:
+    cmd: python ./src/dvc_pipeline/4_dl.py
+    deps:
+    - ./src/dvc_pipeline/4_dl.py
+    params:
+    - dl.model
+    
+  register_model:
+    cmd: python ./src/dvc_pipeline/5_register_model.py
+    deps:
+    - ./src/dvc_pipeline/5_register_model.py
+    params:
+    - register_model.register

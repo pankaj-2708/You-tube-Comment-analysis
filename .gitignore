@@ -2,6 +2,7 @@
 /data/
 /models/
 /catboost_info/
+/mlruns/
 
 # Mac OS-specific storage files
 .DS_Store

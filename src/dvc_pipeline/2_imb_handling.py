@@ -8,7 +8,6 @@ from imblearn.over_sampling import RandomOverSampler
 def load_data(input_path):
     return pd.read_csv(input_path)
 
-
 def save_data(df, output_path):
     df.to_csv(output_path , index=False)
     
@@ -25,11 +24,14 @@ def over_sample(df,over_sampling_method):
         new_y.reset_index(drop=True,inplace=True)
         
     elif over_sampling_method=="SMOTE":
-        rnd=SMOTE(random_state=42)
+        rnd=SMOTE(random_state=42,k_neighbors=10)
         new_X,new_y=rnd.fit_resample(X,y)
         new_X.reset_index(drop=True,inplace=True)
         new_y.reset_index(drop=True,inplace=True)
-
+    else:
+        new_X=X
+        new_y=y
+        
     return pd.concat((new_X,new_y),axis=1)
 
 def split(df,output_path,test_size):
