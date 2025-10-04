@@ -4,11 +4,11 @@ preprocess:
   char_per_words: True
 
 imb:
-  test_size: 0.2
   over_sampling_tech: SMOTE
   
   
 transform:
+  test_size: 0.2
   standardise: False
   no_of_features: 2000
   ngram_range: 1,2
@@ -16,7 +16,7 @@ transform:
 
 model:
   tune_xgb: False
-  tune_rf: False
+  tune_rf: True
   try_models: False
 
 dl:

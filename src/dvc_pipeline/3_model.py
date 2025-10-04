@@ -96,8 +96,8 @@ def objective_RF(trial):
     from sklearn.model_selection import cross_val_score
     
     global X, y
-    n_estimators_ = trial.suggest_int("n_estimators", 10, 200)
-    max_depth_ = trial.suggest_int("max_depth", 3, 30)
+    n_estimators_ = trial.suggest_int("n_estimators", 1, 2)
+    max_depth_ = trial.suggest_int("max_depth", 1, 2)
     max_features_ = trial.suggest_float("max_features", 0, 1)
     bootstrap_ = trial.suggest_categorical("bootstrap", [True, False])
     crietion_ = trial.suggest_categorical(
@@ -182,6 +182,7 @@ def tune_rf(X,y,test_X,test_Y,home_dir):
     from sklearn.model_selection import cross_val_score
     
     study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler())
+    
     study.optimize(objective_RF, n_trials=2) 
     
     best_trial = study.best_trial
@@ -206,8 +207,8 @@ def tune_rf(X,y,test_X,test_Y,home_dir):
         pred_y_train=model_.predict(X)
         confusion_matrix(test_Y,pred_y)
         
-        mlflow.log_artifact(home_dir /'data' / 'transformed'/'vectoriser.pkl')
-        mlflow.log_artifact(home_dir /'data' / 'transformed'/'clm_trans.pkl')
+        mlflow.log_artifact(home_dir /'data' / 'train_test_split'/'vectoriser.pkl')
+        mlflow.log_artifact(home_dir /'data' / 'train_test_split'/'clm_trans.pkl')
         mlflow.log_metric('accuracy',accuracy_score(test_Y,pred_y))
         mlflow.log_metric('accuracy_train',accuracy_score(pred_y_train,y))
         
@@ -224,9 +225,7 @@ def tune_rf(X,y,test_X,test_Y,home_dir):
 def main():
     curr_path = Path(__file__)
     home_dir = curr_path.parent.parent.parent
-    input_path = home_dir / "data" / "train_test_split"
-    output_path = home_dir / "models"
-    output_path.mkdir(parents=True, exist_ok=True)
+    input_path = home_dir / "data" / "oversampled"
 
     with open(home_dir / "params.yaml", "r") as f:
         params = yaml.safe_load(f)["transform"]
@@ -239,10 +238,10 @@ def main():
     train = load_data(input_path / "train.csv")
     test = load_data(input_path / "test.csv")
     global X,y
-    X=train.drop(columns=['lb__Sentiment'])
-    y=train['lb__Sentiment']
-    test_X=test.drop(columns=['lb__Sentiment'])
-    test_y=test['lb__Sentiment']
+    X=train.drop(columns=['Sentiment'])
+    y=train['Sentiment']
+    test_X=test.drop(columns=['Sentiment'])
+    test_y=test['Sentiment']
 
     if params3['tune_xgb']:
         mlflow.set_experiment("HYP tunning")

@@ -23,8 +23,8 @@ stages:
     deps:
     - path: ./src/dvc_pipeline/1_vetorisation.py
       hash: md5
-      md5: 2896e8769530484311a535c91e03b7ca
-      size: 2674
+      md5: e79a85a9714dfdb6f095db780f34a367
+      size: 2684
     params:
       params.yaml:
         transform.ngram_range: 1,2
@@ -33,8 +33,8 @@ stages:
     outs:
     - path: ./data/transformed/
       hash: md5
-      md5: 52f6b0c18ebb3e27b1dfd7bdaa28e983.dir
-      size: 145092646
+      md5: 0d0c53b6e02a723f6373d83150258de6.dir
+      size: 145138577
       nfiles: 3
   imb:
     cmd: python ./src/dvc_pipeline/2_imb_handling.py
@@ -57,12 +57,12 @@ stages:
     deps:
     - path: ./src/dvc_pipeline/3_model.py
       hash: md5
-      md5: b93f7064cf3237783a31002f1e41ce09
-      size: 10520
+      md5: 7ff964befd08cfd243c98131d035b5c3
+      size: 10522
     params:
       params.yaml:
         model.try_models: false
-        model.tune_rf: false
+        model.tune_rf: true
         model.tune_xgb: false
   dl:
     cmd: python ./src/dvc_pipeline/4_dl.py
