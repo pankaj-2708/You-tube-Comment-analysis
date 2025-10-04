@@ -78,3 +78,4 @@ def main():
 if __name__=="__main__":
     main()
     
+# mlflow server -h 0.0.0.0 --default-artifact-root s3://pankaj-maulekhi-mlflow

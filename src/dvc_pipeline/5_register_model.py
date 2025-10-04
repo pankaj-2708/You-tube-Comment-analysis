@@ -8,6 +8,7 @@ mlflow.set_tracking_uri("http://ec2-13-53-126-63.eu-north-1.compute.amazonaws.co
 def register_best_model():
     runs = mlflow.search_runs(experiment_names=['HYP tunning'])
     # print(runs.columns)
+    runs =runs[~runs['params.model'].isnull()]
     runs.sort_values(by="metrics.accuracy", ascending=False, inplace=True)
     best_run = runs.iloc[0]
     best_run_id = best_run["run_id"]
@@ -30,6 +31,7 @@ def register_best_model():
     #     version=model_version.version,
     #     stage='Staging'
     # )
+   
     
 def main():
     curr_path = Path(__file__)
@@ -42,4 +44,4 @@ def main():
         register_best_model()
     
 if __name__=="__main__":
-    register_best_model()
+    main()

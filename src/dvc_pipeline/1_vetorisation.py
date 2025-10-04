@@ -52,11 +52,12 @@ def transform(df,standardise,output_path):
         ('lb',lb,['Sentiment'])
     ],
     remainder='passthrough')
+        
+    df=pd.DataFrame(clm.fit_transform(df),columns=clm.get_feature_names_out())
 
     with open(output_path / "clm_trans.pkl",'wb') as f:
         pickle.dump(clm,f)
         
-    df=pd.DataFrame(clm.fit_transform(df),columns=clm.get_feature_names_out())
     return df
 
 

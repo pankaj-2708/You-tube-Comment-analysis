@@ -52,3 +52,35 @@ stages:
       md5: ce00d9d5000c94723b2234db09779eef.dir
       size: 271927130
       nfiles: 2
+  model:
+    cmd: python ./src/dvc_pipeline/3_model.py
+    deps:
+    - path: ./src/dvc_pipeline/3_model.py
+      hash: md5
+      md5: b93f7064cf3237783a31002f1e41ce09
+      size: 10520
+    params:
+      params.yaml:
+        model.try_models: false
+        model.tune_rf: false
+        model.tune_xgb: false
+  dl:
+    cmd: python ./src/dvc_pipeline/4_dl.py
+    deps:
+    - path: ./src/dvc_pipeline/4_dl.py
+      hash: md5
+      md5: 2cfae445ae9dfc91bafc09143c9ee1fe
+      size: 3801
+    params:
+      params.yaml:
+        dl.model: false
+  register_model:
+    cmd: python ./src/dvc_pipeline/5_register_model.py
+    deps:
+    - path: ./src/dvc_pipeline/5_register_model.py
+      hash: md5
+      md5: c2f785f1e5c7b5d1eccef988cf0990bc
+      size: 1427
+    params:
+      params.yaml:
+        register_model.register: true
