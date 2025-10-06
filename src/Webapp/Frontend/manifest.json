@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube comment Analysis",
+  "version": "1.0.0",
+  "description": "",
+  "action":{
+    "default_popup":"popup.html"
+  },
+  "permissions":["tabs"]
+}

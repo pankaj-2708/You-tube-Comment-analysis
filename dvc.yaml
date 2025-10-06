@@ -20,7 +20,7 @@ stages:
     - transform.standardise
     - transform.test_size
     outs:
-    - ./data/transformed/
+    - ./data/train_test_split/
 
   imb:
     cmd: python ./src/dvc_pipeline/2_imb_handling.py
@@ -29,7 +29,7 @@ stages:
     params:
     - imb.over_sampling_tech
     outs:
-    - ./data/train_test_split/
+    - ./data/oversampled/
 
   model:
     cmd: python ./src/dvc_pipeline/3_model.py

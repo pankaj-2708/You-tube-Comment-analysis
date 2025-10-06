@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>YouTube Comment Analyser</title>
+  <link rel="stylesheet" href="popup.css">
+  <script src="popup.js" defer></script>
+</head>
+
+<body>
+  <div class="container">
+    <h1>YouTube Comment Analyser</h1>
+    <div id="message"></div>
+    <!-- div to show total no of comments -->
+    <div id="total_comments"></div>
+    <div id="stats-content" class="allComments" style="display: none;">
+      <div id="sentiment-stats" class="stats-card">
+        <h2 class="stats-title">Sentiment Summary</h2>
+
+
+        <div class="stats-row">
+          <div class="stat-col PositiveBox">
+            <div class="stat-label">Positive</div>
+            <div class="stat-value" id="positive-percent">0%</div>
+            <div class="stat-bar">
+              <div class="stat-fill positive" id="positive-fill" style="width:0%"></div>
+            </div>
+            <div class="stat-count" id="positive-count">0 / 0</div>
+          </div>
+
+          <div class="stat-col NegativeBox">
+            <div class="stat-label">Negative</div>
+            <div class="stat-value" id="negative-percent">0%</div>
+            <div class="stat-bar">
+              <div class="stat-fill negative" id="negative-fill" style="width:0%"></div>
+            </div>
+            <div class="stat-count" id="negative-count">0 / 0</div>
+          </div>
+
+          <div class="stat-col NeutralBox">
+            <div class="stat-label">Neutral</div>
+            <div class="stat-value" id="neutral-percent">0%</div>
+            <div class="stat-bar">
+              <div class="stat-fill neutral" id="neutral-fill" style="width:0%"></div>
+            </div>
+            <div class="stat-count" id="neutral-count">0 / 0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="comments-container">
+      <!-- Example Comment Divs (will be dynamically added via JS) -->
+      <!--
+      <div class="comment-box">
+        <div class="comment-text">This is a sample comment</div>
+        <div class="comment-status true">True</div>
+      </div>
+      -->
+    </div>
+  </div>
+</body>
+
+</html>
