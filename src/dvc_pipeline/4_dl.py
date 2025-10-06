@@ -56,7 +56,7 @@ def ann(X,y,test_X,test_y):
 def main():
     curr_path = Path(__file__)
     home_dir = curr_path.parent.parent.parent
-    input_path = home_dir / "data" / "train_test_split"
+    input_path = home_dir / "data" / "oversampled"
     output_path = home_dir / "models"
     output_path.mkdir(parents=True, exist_ok=True)
 

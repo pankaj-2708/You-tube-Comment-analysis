@@ -193,7 +193,7 @@ def preprocess_data(df,comment_len=True,word_count=True,char_per_words=True):
         df['word_count']=df['Comment'].apply(lambda x:len(x.split()))
         
     if comment_len and word_count and char_per_words:
-        df['char_per_words']=df['comment_len']/df['word_count']
+        df['char_per_words']=df['comment_len']/abs(df['word_count']+0.0001)
 
     # apos count
     df['apos_count']=df['Comment'].apply(apos_count)
@@ -208,31 +208,51 @@ def preprocess_data(df,comment_len=True,word_count=True,char_per_words=True):
     df["NegativeWordCount"]=df["Comment"].apply(countNegative)
     df["NeutralWordCount"]=df["Comment"].apply(countNeutral)
     # df.dropna(inplace=True)
-    df.to_csv("a.csv",index=False)
+    # df.to_csv("a.csv",index=False)
     return df
 
+import os
+import aiohttp
 
-def get_comments(video_id):
-    try :
-        url = f"https://www.googleapis.com/youtube/v3/videos?part=statistics&id={video_id}&key={os.environ.get('YT_API_KEY')}"
-        data=requests.get(url).json()
-        comment_len=int(data['items'][0]['statistics']['commentCount'])
-        comments={}
-        i=0
-        page_token=None
-        while i<=comment_len:
-            url = f"https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId={video_id}&key={os.environ.get('YT_API_KEY')}"
-            if page_token: 
-                url = f"https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId={video_id}&key={os.environ.get('YT_API_KEY')}&pageToken={page_token}"
-            data=requests.get(url).json()
-            for i in data['items']:
-                comments[i["snippet"]["topLevelComment"]['snippet']['textDisplay']]=i["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-            i=len(comments)
-            if 'nextPageToken' not in data:
-                break
-            page_token=data['nextPageToken']
-        return len(comments),comments
-    
+# aiohttp is faster than requests even for single request due to connection pooling and reuse
+# like requests reopens a new connection for every request which is slow and inefficient aiohttp reuses the same connection for multiple requests which is fast and efficient
+
+async def fetch_page(session, url):
+    async with session.get(url) as response:
+        return await response.json()
+
+async def get_comments(video_id):
+    try:
+        api_key = os.environ.get("YT_API_KEY")
+        base_stats_url = f"https://www.googleapis.com/youtube/v3/videos?part=statistics&id={video_id}&key={api_key}"
+        
+        # --- First request to get comment count ---
+        async with aiohttp.ClientSession() as session:
+            stats_data = await fetch_page(session, base_stats_url)
+            comment_len = int(stats_data["items"][0]["statistics"].get("commentCount", 0))
+            
+            comments = {}
+            page_token = None
+            tasks = []
+
+            while True:
+                url = f"https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&maxResults=100&videoId={video_id}&key={api_key}"
+                if page_token:
+                    url += f"&pageToken={page_token}"
+
+                # fetch current page
+                data = await fetch_page(session, url)
+
+                for item in data.get("items", []):
+                    text = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+                    comments[text] = text
+
+                if "nextPageToken" not in data:
+                    break
+                page_token = data["nextPageToken"]
+
+            return len(comments), comments
+
     except Exception as e:
-        print(e)
-        return {}
+        print("Error:", e)
+        return 0, {}
