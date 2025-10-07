@@ -34,8 +34,8 @@ stages:
     outs:
     - path: ./data/train_test_split/
       hash: md5
-      md5: 23d7dcb194904fc5b93cace67fafb1ad.dir
-      size: 98773529
+      md5: 1f8587ef3da2a43b4d1d8240b5047c1a.dir
+      size: 98661124
       nfiles: 4
   imb:
     cmd: python ./src/dvc_pipeline/2_imb_handling.py
@@ -50,8 +50,8 @@ stages:
     outs:
     - path: ./data/oversampled/
       hash: md5
-      md5: 750ea9da15eada7fb44a1b53b5771300.dir
-      size: 175593307
+      md5: 7f34de7c988659eb554b450309ea806a.dir
+      size: 174970047
       nfiles: 2
   model:
     cmd: python ./src/dvc_pipeline/3_model.py
@@ -63,15 +63,15 @@ stages:
     params:
       params.yaml:
         model.try_models: false
-        model.tune_rf: true
+        model.tune_rf: false
         model.tune_xgb: false
   dl:
     cmd: python ./src/dvc_pipeline/4_dl.py
     deps:
     - path: ./src/dvc_pipeline/4_dl.py
       hash: md5
-      md5: 2cfae445ae9dfc91bafc09143c9ee1fe
-      size: 3801
+      md5: 9d5e818c4c32c8707b31ba5d8dc4a956
+      size: 3796
     params:
       params.yaml:
         dl.model: false
@@ -84,4 +84,4 @@ stages:
       size: 1427
     params:
       params.yaml:
-        register_model.register: true
+        register_model.register: false

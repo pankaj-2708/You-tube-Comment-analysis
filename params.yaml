@@ -16,7 +16,7 @@ transform:
 
 model:
   tune_xgb: False
-  tune_rf: True
+  tune_rf: False
   try_models: False
 
 dl:
@@ -28,4 +28,4 @@ register_model:
 model_report:
   best_model_name: best_model_ann
   best_model_version: 2
-  generate_report: True
+  generate_report: False

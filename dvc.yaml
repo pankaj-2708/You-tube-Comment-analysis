@@ -58,6 +58,6 @@ stages:
     params:
     - model_report.best_model_version
     - model_report.best_model_name
-    - model_report.model_report
+    - model_report.generate_report
     outs:
     - ./reports
