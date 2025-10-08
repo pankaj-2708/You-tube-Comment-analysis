@@ -9,15 +9,11 @@ from pydantic import BaseModel, Field
 from functools import lru_cache
 
 app = FastAPI()
-origins = [
-    "chrome-extension://egdablaelkefeihkgghmcomnpkibepmn",
-    "http://localhost",
-    "http://127.0.0.1:5500",  # add your frontend/origin here
-]
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,9 +30,9 @@ def load_deps(model_name, model_version, run_id="d03a0797ed8b43d68718f77f7bd6ec8
 
     client = mlflow.tracking.MlflowClient()
     model_uri = f"models:/{model_name}/{model_version}"
+    model = mlflow.pyfunc.load_model(model_uri)
     vectoriser = joblib.load(client.download_artifacts(run_id, "vectoriser.pkl"))
     clm_trans = joblib.load(client.download_artifacts(run_id, "clm_trans.pkl"))
-    model = mlflow.pyfunc.load_model(model_uri)
     return model, vectoriser, clm_trans
 
 
@@ -63,10 +59,17 @@ def predict_cat(
 
     df = pd.DataFrame(comments, columns=["Comment"])
     df = preprocess_data(df)
+    
+    # generate wordcloud , positive negative and neutral percentage over the year , pie chart of percentage , 4 stats and present them in frontend 
+    avg_word_count=df['word_count'].mean()
+    
     print("time to preprocess comments", time.time() - start_time)
+
+    
     start_time = time.time()
     bag_of_words = vectoriser.transform(df["Comment"])
     bag_of_words = pd.DataFrame(bag_of_words.toarray(), columns=vectoriser.get_feature_names_out())
+
     df.reset_index(inplace=True, drop=True)
     df = pd.concat([df, bag_of_words], axis=1)
     df.drop(columns="Comment", inplace=True)

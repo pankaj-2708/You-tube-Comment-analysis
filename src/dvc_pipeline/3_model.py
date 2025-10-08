@@ -29,11 +29,11 @@ def try_models(
     from sklearn.model_selection import cross_val_score
 
     for name, model in [
-        (f"xgboost {add_info}", XGBClassifier()),
+        # (f"xgboost {add_info}", XGBClassifier()),
         (f"random_forest {add_info}", RandomForestClassifier(n_jobs=-1, random_state=42)),
-        (f"gradient_boosting {add_info}", GradientBoostingClassifier(random_state=42)),
-        (f"lgm {add_info}", LGBMClassifier(boosting_type="goss", n_jobs=-1, random_state=42)),
-        (f"svc {add_info}", SVC(random_state=42)),
+        # (f"gradient_boosting {add_info}", GradientBoostingClassifier(random_state=42)),
+        # (f"lgm {add_info}", LGBMClassifier(boosting_type="goss", n_jobs=-1, random_state=42)),
+        # (f"svc {add_info}", SVC(random_state=42)),
     ]:
         with mlflow.start_run():
             mlflow.log_param("model", name)
@@ -46,7 +46,7 @@ def try_models(
 
             model_.fit(X, y)
             param = model_.get_params()
-            model_.fit(X, y)
+            # model_.fit(X, y)
             for i in range(len(param)):
                 mlflow.log_param(list(param.keys())[i], list(param.values())[i])
 
@@ -56,7 +56,7 @@ def try_models(
             mlflow.log_metric("accuracy_cv_score", cross_val_score(model, X, y).mean())
             mlflow.log_metric("accuracy", accuracy_score(test_y, pred_y))
             mlflow.log_metric("accuracy_train", accuracy_score(y, pred_y_train))
-            mlflow.pyfunc.log_model(name=name, python_model=model_)
+            # mlflow.pyfunc.log_model(model_,artifact_path='model')
 
 
 def objective_XGB(trial):

@@ -4,20 +4,19 @@ preprocess:
   char_per_words: True
 
 imb:
-  over_sampling_tech: SMOTE
-  
+  over_sampling_tech: none
   
 transform:
   test_size: 0.2
   standardise: False
   no_of_features: 2000
   ngram_range: 1,2
-  count_vec: True
+  count_vec: False
 
 model:
   tune_xgb: False
   tune_rf: False
-  try_models: False
+  try_models: True
 
 dl:
   model: False

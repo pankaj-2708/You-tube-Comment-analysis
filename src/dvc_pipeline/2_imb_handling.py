@@ -16,7 +16,7 @@ def save_data(df, output_path):
 def over_sample(df, over_sampling_method):
     X = df.drop(columns=["Sentiment"])
     y = df[["Sentiment"]]
-
+    
     new_X = None
     new_y = None
     if over_sampling_method == "random":

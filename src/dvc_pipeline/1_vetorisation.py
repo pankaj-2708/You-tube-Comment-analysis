@@ -22,11 +22,9 @@ def split(df, test_size):
     )
     return train, test
 
-
 def vectorisation(train, test, no_of_features, ngram_range, output_path, count_ve):
     train.dropna(inplace=True)
     test.dropna(inplace=True)
-
     count_vec = None
     if count_ve:
         count_vec = CountVectorizer(
@@ -39,6 +37,9 @@ def vectorisation(train, test, no_of_features, ngram_range, output_path, count_v
             ngram_range=(int(ngram_range.split(",")[0]), int(ngram_range.split(",")[1])),
         )
 
+    train.reset_index(inplace=True)
+    test.reset_index(inplace=True)
+    
     train_y = train["Sentiment"]
     train = train.drop(columns=["Sentiment"])
 
@@ -52,10 +53,10 @@ def vectorisation(train, test, no_of_features, ngram_range, output_path, count_v
         bag_of_words2.toarray(), columns=count_vec.get_feature_names_out()
     )
 
-    train.reset_index(inplace=True, drop=True)
+    # train.reset_index(inplace=True, drop=True)
     train = pd.concat([train, bag_of_words], axis=1)
 
-    test.reset_index(inplace=True, drop=True)
+    # test.reset_index(inplace=True, drop=True)
     test = pd.concat([test, bag_of_words2], axis=1)
 
     # saving count vectoriser
@@ -65,6 +66,7 @@ def vectorisation(train, test, no_of_features, ngram_range, output_path, count_v
     train.drop(columns="Comment", inplace=True)
     test.drop(columns="Comment", inplace=True)
 
+
     train["Sentiment"] = train_y
     test["Sentiment"] = test_y
 
@@ -72,8 +74,10 @@ def vectorisation(train, test, no_of_features, ngram_range, output_path, count_v
 
 
 def transform(train, test, standardise, output_path):
-    train.dropna(inplace=True)
-    test.dropna(inplace=True)
+    # print(train.isnull().sum())
+    # print(test.isnull().sum())
+    # train.dropna(inplace=True)
+    # test.dropna(inplace=True)
 
     std = None
     if standardise:
@@ -124,7 +128,7 @@ def main():
         params = yaml.safe_load(f)["transform"]
 
     df = load_data(input_path)
-
+    print(df.shape)
     train, test = split(df, params["test_size"])
 
     train, test = vectorisation(
@@ -135,7 +139,9 @@ def main():
         output_path,
         params["count_vec"],
     )
+    # print(train.shape,test.shape)
     train, test = transform(train, test, params["standardise"], output_path)
+    # print(train.shape,test.shape)
 
     save_data(train, output_path / "train.csv")
     save_data(test, output_path / "test.csv")

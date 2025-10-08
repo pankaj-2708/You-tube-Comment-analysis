@@ -5,8 +5,8 @@ FROM python:3.12-slim
 WORKDIR /app
 
 #copying requirements and installing dependeces
-COPY requirements_backend.txt .
-RUN pip install -r requirements_backend.txt
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
 COPY . .
 

@@ -4,14 +4,15 @@ import pandas as pd
 import regex as re
 from pathlib import Path
 from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
+from nltk.stem import PorterStemmer
+from nltk.tokenize import word_tokenize
 
 nltk.download("stopwords")
-nltk.download("punkt_tab")
-nltk.download("wordnet")
-nltk.download("omw-1.4")
-nltk.download("averaged_perceptron_tagger_eng")
-ps = WordNetLemmatizer()
+# nltk.download("punkt_tab")
+# nltk.download("wordnet")
+# nltk.download("omw-1.4")
+# nltk.download("averaged_perceptron_tagger_eng")
+ps = PorterStemmer()
 
 
 def load_data(input_path):
@@ -247,24 +248,26 @@ neutral_words = [
     "sometimes",
 ]
 
-neutral_wrod_list = [ps.lemmatize(word) for word in neutral_words]
-positive_wrod_list = [ps.lemmatize(word) for word in positive_words]
-negative_wrod_list = [ps.lemmatize(word) for word in negative_words]
+neutral_wrod_list = [ps.stem(word) for word in neutral_words]
+positive_wrod_list = [ps.stem(word) for word in positive_words]
+negative_wrod_list = [ps.stem(word) for word in negative_words]
 
 stpWrd = stopwords.words("english")
 
+def tokenize_text(text):
+    return word_tokenize(text)
 
 def stemming(txt):
     new_txt = []
-    for word in txt.split():
+    for word in txt:
         # if word not in stpWrd:
-        new_txt.append(ps.lemmatize(word))
-    return " ".join(new_txt)
+        new_txt.append(ps.stem(word))
+    return new_txt
 
 
 def countNegative(lst):
     count = 0
-    for i in lst.split():
+    for i in lst:
         if i in negative_wrod_list:
             count += 1
     return count
@@ -272,7 +275,7 @@ def countNegative(lst):
 
 def countPositive(lst):
     count = 0
-    for i in lst.split():
+    for i in lst:
         if i in positive_wrod_list:
             count += 1
     return count
@@ -280,7 +283,7 @@ def countPositive(lst):
 
 def countNeutral(lst):
     count = 0
-    for i in lst.split():
+    for i in lst:
         if i in neutral_wrod_list:
             count += 1
     return count
@@ -296,15 +299,15 @@ def apos_count(txt):
 
 def remove_stopword(txt):
     new_txt = []
-    for word in txt.split():
+    for word in txt:
         if word not in stpWrd:
             new_txt.append(word)
-    return " ".join(new_txt)
+    return new_txt
 
 
 def count_stopword(txt):
     count = 0
-    for word in txt.split():
+    for word in txt:
         if word in stpWrd:
             count += 1
     return count
@@ -325,11 +328,13 @@ def preprocess_data(df, comment_len, word_count, char_per_words):
     if comment_len:
         df["comment_len"] = df["Comment"].apply(lambda x: len(x))
 
+    df['Comment']=df['Comment'].apply(word_tokenize)
+    
     if word_count:
-        df["word_count"] = df["Comment"].apply(lambda x: len(x.split()))
+        df["word_count"] = df["Comment"].apply(lambda x: len(x))
 
     if comment_len and word_count and char_per_words:
-        df["char_per_words"] = df["comment_len"] / df["word_count"]
+        df["char_per_words"] = df["comment_len"] / (df["word_count"]+0.001)
 
     # apos count
 
@@ -343,6 +348,7 @@ def preprocess_data(df, comment_len, word_count, char_per_words):
     df["PositiveWordCount"] = df["Comment"].apply(countPositive)
     df["NegativeWordCount"] = df["Comment"].apply(countNegative)
     df["NeutralWordCount"] = df["Comment"].apply(countNeutral)
+    df['Comment']=df['Comment'].apply(lambda x:" ".join(x))
     df.dropna(inplace=True)
     return df
 
@@ -358,10 +364,11 @@ def main():
         params = yaml.safe_load(f)["preprocess"]
 
     df = load_data(input_path)
-
+    # print(df.shape)
     df = preprocess_data(df, params["comment_len"], params["word_count"], params["char_per_words"])
 
     save_data(df, output_path / "preprocessed.csv")
+    # print(df.shape)
 
 
 if __name__ == "__main__":
