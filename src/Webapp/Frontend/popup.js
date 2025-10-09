@@ -20,6 +20,7 @@ async function checkYouTubeUrl() {
   const videoId = match[1];
   let prediction = [];
   let total_comments = -1;
+  let analysisData = null; // store stats & charts
 
   async function getPrediction(videoId) {
     try {
@@ -27,6 +28,7 @@ async function checkYouTubeUrl() {
       const data = await res.json();
       prediction = data['comments'];
       total_comments = data['total_comments'];
+      analysisData = data; // store for charts and stats
     } catch (err) {
       console.error("Error fetching predictions:", err);
     }
@@ -64,7 +66,6 @@ async function checkYouTubeUrl() {
     });
 
     document.getElementById("stats-content").style.display = "block";
-
     updateSentimentStats(
       (counts.positive * 100) / total_comments,
       (counts.negative * 100) / total_comments,
@@ -73,6 +74,7 @@ async function checkYouTubeUrl() {
     );
 
     setupFilterListeners();
+    updateAnalysisTab();
   }
 
   function updateSentimentStats(positive, negative, neutral, total) {
@@ -89,41 +91,84 @@ async function checkYouTubeUrl() {
     document.getElementById("neutral-count").textContent = `${Math.round(total * neutral / 100)} / ${total}`;
   }
 
+  function setupFilterListeners() {
+    const positiveBox = document.querySelector('.PositiveBox');
+    const negativeBox = document.querySelector('.NegativeBox');
+    const neutralBox = document.querySelector('.NeutralBox');
+    const allCommentsBox = document.querySelector('.allComments');
+
+    if (!positiveBox || !negativeBox || !neutralBox || !allCommentsBox) return;
+
+    [positiveBox, negativeBox, neutralBox, allCommentsBox].forEach(el => el.style.cursor = 'pointer');
+
+    const filterComments = (filter) => {
+      const comments = document.querySelectorAll('.comment-box');
+      comments.forEach(comment => {
+        comment.style.display = (filter === 'all' || comment.classList.contains(filter)) ? 'flex' : 'none';
+      });
+    };
+
+    positiveBox.addEventListener('click', () => filterComments('positive'));
+    negativeBox.addEventListener('click', () => filterComments('negative'));
+    neutralBox.addEventListener('click', () => filterComments('neutral'));
+    allCommentsBox.addEventListener('click', () => filterComments('all'));
+  }
+
+  function updateAnalysisTab() {
+    if (!analysisData) return;
+
+    // Update stats
+    document.getElementById("avg_word_count").textContent = analysisData.avg_word_count;
+    document.getElementById("avg_pos_word_count").textContent = analysisData.avg_pos_word_count;
+    document.getElementById("avg_neg_word_count").textContent = analysisData.avg_neg_word_count;
+    document.getElementById("avg_neu_word_count").textContent = analysisData.avg_neu_word_count;
+
+    // Update charts (Base64 images)
+    const chartIds = ['pie_chart', 'trend_chart', 'wordcloud_neg', 'wordcloud_neu', 'wordcloud_pos'];
+    const chartKeys = ['pie_chart', 'trend_chart', 'wordcloud_neg', 'wordcloud_neu', 'wordcloud_pos'];
+    const chartTitles = [
+    "Sentiment Distribution (Pie Chart)",
+    "Sentiment Trend Over Time",
+    "Negative Words Wordcloud",
+    "Neutral Words Wordcloud",
+    "Positive Words Wordcloud"
+  ];
+    chartIds.forEach((id, idx) => {
+      const el = document.getElementById(id);
+      el.innerHTML = ""; // clear previous
+      const title = document.createElement("div");
+    title.classList.add("chart-title");
+    title.textContent = chartTitles[idx];
+    el.appendChild(title)
+
+    const img = document.createElement("img");
+      img.src = `data:image/png;base64,${analysisData[chartKeys[idx]]}`;
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "contain";
+      el.appendChild(img);
+    });
+  }
+
   main();
 }
 
-function setupFilterListeners() {
-  const positiveBox = document.querySelector('.PositiveBox');
-  const negativeBox = document.querySelector('.NegativeBox');
-  const neutralBox = document.querySelector('.NeutralBox');
-  const allCommentsBox = document.querySelector('.allComments');
+// Tab switching
+window.onload = () => {
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabContents = document.querySelectorAll('.tab-content');
 
-  if (!positiveBox || !negativeBox || !neutralBox || !allCommentsBox) {
-    console.warn("Filter boxes not found in DOM");
-    return;
-  }
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
 
-  [positiveBox, negativeBox, neutralBox, allCommentsBox].forEach(el => {
-    el.style.cursor = 'pointer';
+      tabContents.forEach(tc => tc.style.display = 'none');
+      tabButtons.forEach(b => b.classList.remove('active'));
+
+      document.getElementById(target).style.display = 'block';
+      btn.classList.add('active');
+    });
   });
 
-  const filterComments = (filter) => {
-    const comments = document.querySelectorAll('.comment-box');
-    comments.forEach(comment => {
-      if (filter === 'all' || comment.classList.contains(filter)) {
-        comment.style.display = 'flex';
-      } else {
-        comment.style.display = 'none';
-      }
-    });
-  };
-
-  positiveBox.addEventListener('click', () => filterComments('positive'));
-  negativeBox.addEventListener('click', () => filterComments('negative'));
-  neutralBox.addEventListener('click', () => filterComments('neutral'));
-  allCommentsBox.addEventListener('click', () => filterComments('all'));
-}
-
-window.onload = () => {
   checkYouTubeUrl();
 };

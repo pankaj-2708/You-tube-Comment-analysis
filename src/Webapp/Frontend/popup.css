@@ -312,3 +312,123 @@ h1 {
     font-size: 18px;
   }
 }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 16px;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 10px 0;
+  background: #1a1f2e;
+  color: #8899a6;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 0 4px;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(123, 47, 247, 0.4);
+}
+
+/* New Stats Box */
+.stats-box {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: #1a1f2e;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  margin-bottom: 20px;
+  text-align: center;
+}
+.chart {
+  background: #1a1f2e;
+  border-radius: 12px;
+  padding: 12px;
+  height: 250px; /* bigger height for clarity */
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart img {
+  width: 90%;
+  height: auto;
+  object-fit: contain;
+  margin-top: 8px;
+}
+
+.chart-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e1e8ed;
+  text-align: center;
+}
+
+.stats-box .stat-item {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e1e8ed;
+  padding: 10px;
+  border-radius: 10px;
+  background: #242b3d;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Charts */
+.charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+
+
+/* Make charts scrollable if many */
+#charts-tab {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+#charts-tab::-webkit-scrollbar {
+  width: 6px;
+}
+
+#charts-tab::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+#charts-tab::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
+  border-radius: 10px;
+}
+
+#charts-tab::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7b2ff7 0%, #00d4ff 100%);
+}
+
+/* Responsive */
+@media (max-width: 400px) {
+  .stats-box {
+    grid-template-columns: 1fr;
+  }
+
+  .chart {
+    height: 350px;
+  }
+}

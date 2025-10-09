@@ -1,10 +1,16 @@
 import nltk
 import pandas as pd
 import regex as re
+import os
+import aiohttp
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from dotenv import load_dotenv
 import os
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import base64
+import seaborn as sns
 
 load_dotenv()
 
@@ -323,6 +329,8 @@ def clean(txt):
 
 
 def preprocess_data(df, comment_len=True, word_count=True, char_per_words=True):
+    import time
+    start_time = time.time()
     df.fillna("")
     df["Comment"] = df["Comment"].str.lower().str.strip()
 
@@ -353,13 +361,71 @@ def preprocess_data(df, comment_len=True, word_count=True, char_per_words=True):
     df["PositiveWordCount"] = df["Comment"].apply(countPositive)
     df["NegativeWordCount"] = df["Comment"].apply(countNegative)
     df["NeutralWordCount"] = df["Comment"].apply(countNeutral)
+    
+    print("time to preprocess data", time.time() - start_time)
     # df.dropna(inplace=True)
     # df.to_csv("a.csv",index=False)
     return df
 
+def genrate_wordcloud(df):
+    sen=['negative','neutral','positive']
+    figs=[]
+    for s in sen:
+        plt.figure(figsize=(3,3))
+        wc=WordCloud(width=350, height=350).generate(" ".join(df[df["Sentiment"]==s]['Comment']))
+        plt.imshow(wc, interpolation='bilinear')
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig(f'./images/{s}.png')
+        
+        with open(f"./images/{s}.png", "rb") as f:
+            encoded = base64.b64encode(f.read()).decode('utf-8')
+        figs.append(encoded)
+        
+    return figs
 
-import os
-import aiohttp
+def generate_pie_chart(out):
+    out=list(out)
+    label=['negative' , 'neutral' , 'positive' ]
+    x=[out.count(0),out.count(1),out.count(2)]
+    plt.figure(figsize=(3,3))
+    plt.pie(x ,labels=label,autopct='%.2f%%')
+    plt.tight_layout()
+    plt.savefig(f'./images/pie.png')
+        
+    with open("images/pie.png", "rb") as f:
+        encoded = base64.b64encode(f.read()).decode('utf-8')    
+    return encoded
+
+def generate_trend_chart(df):
+    df['date']=pd.to_datetime(df['date'])
+    df['date']=df['date'].dt.date
+    x=df.pivot_table(index='date',columns='output',aggfunc="size",values='output').fillna(0)
+    count_0=x[0]
+    count_1=x[1]
+    count_2=x[2]
+    count_0=count_0.cumsum()
+    count_1=count_1.cumsum()    
+    count_2=count_2.cumsum()
+    total=count_0+count_1+count_2
+    count_0=count_0/total
+    count_1=count_1/total
+    count_2=count_2/total
+    dates=x.index
+    plt.figure(figsize=(4,4.5))
+    sns.lineplot(x=dates,y=count_0,label='negative',color='red',markers='o')
+    sns.lineplot(x=dates,y=count_1,label='neutral',color='blue',markers='o')
+    sns.lineplot(x=dates,y=count_2,label='positive',color='green',markers='o')
+    # tilting x axis labels
+    plt.xticks(rotation=45)
+    plt.xlabel('Date')
+    plt.ylabel('Cumulative Percentage')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'./images/trend.png')
+    with open("images/trend.png", "rb") as f:
+        encoded = base64.b64encode(f.read()).decode('utf-8')
+    return encoded
 
 # aiohttp is faster than requests even for single request due to connection pooling and reuse
 # like requests reopens a new connection for every request which is slow and inefficient aiohttp reuses the same connection for multiple requests which is fast and efficient
@@ -394,7 +460,8 @@ async def get_comments(video_id):
 
                 for item in data.get("items", []):
                     text = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-                    comments[text] = text
+                    pub_time=item["snippet"]["topLevelComment"]["snippet"]['publishedAt']
+                    comments[text] = [text,pub_time]
 
                 if "nextPageToken" not in data:
                     break
