@@ -1,0 +1,152 @@
+name: CI CD pipeline
+on:
+    push
+
+jobs:
+    build:
+        if: ${{ github.actor != 'github-actions[bot]' }}
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/setup-node@v4
+              with:
+                node-version: 18
+
+            - name: setup_cml
+              uses: iterative/setup-cml@v1
+          
+            - name: checkout repo
+              uses: actions/checkout@v3
+              
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                python-version: 3.12
+            
+            - name: cache pip deps
+              uses: actions/cache@v3
+              with:
+                path: ~/.cache/pip
+                key: $ {{ runner.os }}-pip-${{hashFiles('requirements.txt')}}
+                restore-keys: |
+                  ${{ runner.os }} -pip- 
+
+            - name: Install Dependencies
+              run: |
+                python -m pip install --upgrade pip
+                pip install -r ./src/dvc_pipeline/requirements.txt
+
+            - name: Configure Aws credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                aws-region: ${{ secrets.AWS_REGION }}
+                
+            - name: creating_directories
+              run: |
+                mkdir -p ./data/raw
+
+            - id: install-aws-cli
+              uses: unfor19/install-aws-cli-action@v1
+              with:
+                version: 2                         # default
+                verbose: false                     # default
+                arch: amd64                        # allowed values: amd64, x86, x64, arm, arm64
+
+            - name: Download Dataset from S3
+              run: aws s3 cp s3://pankajmaulekhi-yt-comment-analysis/Dataset/YoutubeCommentsDataSet.csv ./data/raw/
+            
+            - name: running pipeline
+              run: | 
+                dvc repro
+
+            - name: creating report
+              env:
+                REPO_TOKEN: ${{secrets.GITHUB_TOKEN }}
+              run: |
+                cml comment create reports/model_report.md
+
+            - name: configuring git
+              run: |
+                git config --global user.name "github-actions[bot]"
+                git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            
+            - name: pushing to git
+              env:
+                GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+              run: |
+                git add .
+                git commit -m"commit by bot"
+                git push origin ${{github.ref_name}}
+
+            - name: pushing to dvc
+              env:
+                AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+              run: |
+                dvc push
+
+    build_image_and_push_to_ecr:
+      needs: build
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v3
+
+        - name: Configure Aws credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws-region: ${{ secrets.AWS_REGION }}
+
+        - name: Login to Amazon ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v2
+        
+        - name: build_docker_image
+          id: build-image
+          env:
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+            IMAGE_TAG: latest
+          run: |
+            cd ./src/Webapp/Backend
+            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+            echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    deploy_webapp:
+      needs: build_image_and_push_to_ecr
+      runs-on: yt-backend
+
+      steps:
+        - name: checkout repo
+          uses: actions/checkout@v3
+          
+        - name: Configure Aws credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws-region: ${{ secrets.AWS_REGION }}
+
+        - name: Login to Amazon ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v2
+          
+        - name: run docker compose
+          env:
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+            IMAGE_TAG: latest
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+            YT_API_KEY: ${{ secrets.YT_API_KEY }}
+          run: |
+            docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+            timeout 600 docker run -p 8000:8000 -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e YT_API_KEY=$YT_API_KEY $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG || true
