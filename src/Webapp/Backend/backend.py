@@ -5,11 +5,17 @@ from fastapi.responses import JSONResponse
 import mlflow
 import pandas as pd
 import time
-import pickle
 import asyncio
 import joblib
 from pydantic import BaseModel, Field
 from functools import lru_cache
+
+# for docker/linux
+import tflite_runtime.interpreter as tflite
+
+# for windows
+# import tensorflow as tf
+# tflite = tf.lite
 
 app = FastAPI()
 
@@ -28,19 +34,32 @@ class custom_dtp(BaseModel):
 
 
 @lru_cache()
-def load_deps(model_name, model_version, run_id="d03a0797ed8b43d68718f77f7bd6ec83"):
+def load_deps(run_id="58151a94895249a68b889a83a4e08dc2"):
     mlflow.set_tracking_uri("http://ec2-13-53-126-63.eu-north-1.compute.amazonaws.com:5000/")
 
     client = mlflow.tracking.MlflowClient()
-    model_uri = f"models:/{model_name}/{model_version}"
-    model = mlflow.pyfunc.load_model(model_uri)
+    # model_uri = f"models:/{model_name}/{model_version}"
+    # model = mlflow.pyfunc.load_model(model_uri)
+    
+    runs = mlflow.search_runs(experiment_names=["HYP tunning"])
+    
     vectoriser = joblib.load(client.download_artifacts(run_id, "vectoriser.pkl"))
     clm_trans_path=client.download_artifacts(run_id, "clm_trans.pkl")
     clm_trans = joblib.load(clm_trans_path)
-    return model, vectoriser, clm_trans
+
+    model_type=runs[runs['run_id']==run_id]['params.type_of_model'].values[0]
+    model=None
+    if model_type=='ml':
+        model_path = client.download_artifacts(run_id, "model.pkl")
+        model = joblib.load(model_path)
+    else:
+        model_path = client.download_artifacts(run_id, "model.tflite")
+        model = tflite.Interpreter(model_path=model_path)
+
+    return model_type,model, vectoriser, clm_trans
 
 
-model, vectoriser, clm_trans = load_deps("best_model_ann", 1)
+model_type,interpreter, vectoriser, clm_trans = load_deps()
 
 
 
@@ -85,8 +104,23 @@ def predict_cat(
     df = pd.DataFrame(clm_trans.transform(df), columns=clm_trans.get_feature_names_out())
     print("time to vectorise comments", time.time() - start_time)
     start_time = time.time()
+    output = None
+    
+    if model_type=='ml':
+        output = interpreter.predict(df.values)
+    else:
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
 
-    output = model.predict(df.values).argmax(axis=1)
+        interpreter.resize_tensor_input(input_details[0]['index'], [df.shape[0]] + list(input_details[0]['shape'][1:]))
+        interpreter.allocate_tensors()
+        
+        interpreter.set_tensor(input_details[0]['index'], df.values.astype('float32'))
+        interpreter.invoke()
+        output_data = interpreter.get_tensor(output_details[0]['index'])
+        output = output_data.argmax(axis=1)
+    
+    # output = model.predict(df.values).argmax(axis=1)
     print("time to predict comments", time.time() - start_time)
     matched_output = []
     for i in output:
@@ -103,7 +137,11 @@ def predict_cat(
     if len(comments_id) != len(output):
         print("length mistmatch", len(comments_id) , len(output))
         
+    print(output)
+    print(org_df.head())
+    print(df.head())
     org_df['Sentiment']=matched_output
+    print(org_df.head())
     wordcloud_neg,wordcloud_neu,wordcloud_pos=genrate_wordcloud(org_df)
     
     

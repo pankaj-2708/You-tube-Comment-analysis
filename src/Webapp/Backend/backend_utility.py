@@ -371,6 +371,9 @@ def genrate_wordcloud(df):
     sen=['negative','neutral','positive']
     figs=[]
     for s in sen:
+        if len(df[df["Sentiment"]==s])==0:
+            figs.append(None)
+            continue
         plt.figure(figsize=(3,3))
         wc=WordCloud(width=350, height=350).generate(" ".join(df[df["Sentiment"]==s]['Comment']))
         plt.imshow(wc, interpolation='bilinear')

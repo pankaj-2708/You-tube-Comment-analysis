@@ -14,5 +14,7 @@ seaborn==0.13.2
 uvicorn==0.37.0
 wordcloud==1.9.4
 boto3
+numpy==1.26.4
 scikit-learn==1.6.1
-tensorflow-cpu==2.16.1   # much smaller than full tensorflow
+# tensorflow-cpu==2.16.1   # much smaller than full tensorflow
+tflite_runtime
