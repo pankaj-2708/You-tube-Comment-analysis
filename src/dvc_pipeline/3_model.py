@@ -36,6 +36,7 @@ def try_models(
         # (f"svc {add_info}", SVC(random_state=42)),
     ]:
         with mlflow.start_run():
+            mlflow.log_param("type_of_model", "ml")
             mlflow.log_param("model", name)
             mlflow.log_param("over_sampling_tech", over_sampling_tech)
             mlflow.log_param("no of features", no_of_features)
@@ -134,7 +135,7 @@ def objective_RF(trial):
     return score
 
 
-def tune_xgb(X, y, test_X, test_Y, home_dir):
+def tune_xgb(X, y, test_X, test_Y, home_dir,output_path):
     import plotly.express as px
     from optuna.visualization import plot_optimization_history, plot_slice, plot_param_importances
     from sklearn.metrics import accuracy_score, confusion_matrix
@@ -150,6 +151,7 @@ def tune_xgb(X, y, test_X, test_Y, home_dir):
 
     with mlflow.start_run():
         mlflow.log_param("model", "xgboost_tunned")
+        mlflow.log_param("type_of_model", "ml")
         for trial in study.get_trials():
             with mlflow.start_run(nested=True):
                 j = {k: str(v) for k, v in trial.params.items()}
@@ -160,7 +162,12 @@ def tune_xgb(X, y, test_X, test_Y, home_dir):
             mlflow.log_param(key, value)
 
         model_ = XGBClassifier(**best_trial.params, random_state=42)
+        with open(output_path / "model.pkl", "wb") as f:
+            import joblib
 
+            joblib.dump(model_, f)
+        # also logging model in pickle format for easy loading
+        mlflow.log_artifact(output_path / "model.pkl")
         model_.fit(X, y)
         signature = mlflow.models.infer_signature(X, y)
         mlflow.xgboost.log_model(model_, artifact_path="model")
@@ -181,7 +188,7 @@ def tune_xgb(X, y, test_X, test_Y, home_dir):
         mlflow.log_figure(fig, "optuna_plot_slice.png")
 
 
-def tune_rf(X, y, test_X, test_Y, home_dir):
+def tune_rf(X, y, test_X, test_Y, home_dir,output_path):
     import plotly.express as px
     from optuna.visualization import plot_optimization_history, plot_slice, plot_param_importances
     from sklearn.metrics import accuracy_score, confusion_matrix
@@ -195,6 +202,7 @@ def tune_rf(X, y, test_X, test_Y, home_dir):
     best_trial = study.best_trial
 
     with mlflow.start_run():
+        mlflow.log_param("type_of_model", "ml")
         mlflow.log_param("model", "random_forest_tunned")
         for trial in study.get_trials():
             with mlflow.start_run(nested=True):
@@ -209,7 +217,12 @@ def tune_rf(X, y, test_X, test_Y, home_dir):
 
         model_.fit(X, y)
         mlflow.sklearn.log_model(model_, artifact_path="model")
+        with open(output_path / "model.pkl", "wb") as f:
+            import joblib
 
+            joblib.dump(model_, f)
+        # also logging model in pickle format for easy loading
+        mlflow.log_artifact(output_path / "model.pkl")
         pred_y = model_.predict(test_X)
         pred_y_train = model_.predict(X)
         confusion_matrix(test_Y, pred_y)
@@ -233,6 +246,7 @@ def main():
     curr_path = Path(__file__)
     home_dir = curr_path.parent.parent.parent
     input_path = home_dir / "data" / "oversampled"
+    output_path = home_dir / "models"
 
     with open(home_dir / "params.yaml", "r") as f:
         params = yaml.safe_load(f)["transform"]
@@ -252,10 +266,10 @@ def main():
 
     if params3["tune_xgb"]:
         mlflow.set_experiment("HYP tunning")
-        tune_xgb(X, y, test_X, test_y, home_dir)
+        tune_xgb(X, y, test_X, test_y, home_dir,output_path)
     if params3["tune_rf"]:
         mlflow.set_experiment("HYP tunning")
-        tune_rf(X, y, test_X, test_y, home_dir)
+        tune_rf(X, y, test_X, test_y, home_dir,output_path)
     if params3["try_models"]:
         mlflow.set_experiment("Python")
         try_models(

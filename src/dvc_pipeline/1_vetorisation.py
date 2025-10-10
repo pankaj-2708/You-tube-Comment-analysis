@@ -37,8 +37,8 @@ def vectorisation(train, test, no_of_features, ngram_range, output_path, count_v
             ngram_range=(int(ngram_range.split(",")[0]), int(ngram_range.split(",")[1])),
         )
 
-    train.reset_index(inplace=True)
-    test.reset_index(inplace=True)
+    train.reset_index(inplace=True,drop=True)
+    test.reset_index(inplace=True,drop=True)
     
     train_y = train["Sentiment"]
     train = train.drop(columns=["Sentiment"])
@@ -128,8 +128,11 @@ def main():
         params = yaml.safe_load(f)["transform"]
 
     df = load_data(input_path)
+    # print(df.head())
     print(df.shape)
     train, test = split(df, params["test_size"])
+
+    # print(train.head())
 
     train, test = vectorisation(
         train,
@@ -143,6 +146,7 @@ def main():
     train, test = transform(train, test, params["standardise"], output_path)
     # print(train.shape,test.shape)
 
+    # print(train.head())
     save_data(train, output_path / "train.csv")
     save_data(test, output_path / "test.csv")
 
