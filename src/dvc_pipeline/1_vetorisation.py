@@ -7,7 +7,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
-
 def load_data(input_path):
     return pd.read_csv(input_path)
 
@@ -53,13 +52,19 @@ def vectorisation(train, test, no_of_features, ngram_range, output_path, count_v
         bag_of_words2.toarray(), columns=count_vec.get_feature_names_out()
     )
 
-    # train.reset_index(inplace=True, drop=True)
+    # train_shape=train.shape[1]
+    train.reset_index(inplace=True, drop=True)
     train = pd.concat([train, bag_of_words], axis=1)
 
     # test.reset_index(inplace=True, drop=True)
     test = pd.concat([test, bag_of_words2], axis=1)
 
-    # saving count vectoriser
+    # saving count vectoriser in onnx format for lightweight deployment
+    # initial_type = [('float_input', StringTensorType([None, 1]))]
+    # onnx_model = convert_sklearn(count_vec, initial_types=initial_type)
+    # with open(output_path / "vectoriser.onnx", "wb") as f:
+    #     f.write(onnx_model.SerializeToString())
+        
     with open(output_path / "vectoriser.pkl", "wb") as f:
         pickle.dump(count_vec, f)
 
@@ -100,6 +105,7 @@ def transform(train, test, standardise, output_path):
         remainder="passthrough",
     )
 
+    # train_shape = train.shape[1]
     train = pd.DataFrame(clm.fit_transform(train), columns=clm.get_feature_names_out())
 
     train_y = lb.fit_transform(train_y)
@@ -108,6 +114,12 @@ def transform(train, test, standardise, output_path):
     test = pd.DataFrame(clm.transform(test), columns=clm.get_feature_names_out())
     test_y = lb.transform(test_y)
 
+    # initial_type = [('float_input', FloatTensorType([None, train_shape]))]
+    # onnx_model = convert_sklearn(clm, initial_types=initial_type)
+    
+    # with open(output_path / "clm_trans.onnx", "wb") as f:
+    #     f.write(onnx_model.SerializeToString())
+        
     with open(output_path / "clm_trans.pkl", "wb") as f:
         pickle.dump(clm, f)
 
@@ -132,6 +144,9 @@ def main():
     print(df.shape)
     train, test = split(df, params["test_size"])
 
+    save_data(train, output_path / "train_not_vectorised.csv")
+    save_data(test, output_path / "test_not_vectorised.csv")
+    
     # print(train.head())
 
     train, test = vectorisation(

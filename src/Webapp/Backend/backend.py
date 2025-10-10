@@ -137,11 +137,11 @@ def predict_cat(
     if len(comments_id) != len(output):
         print("length mistmatch", len(comments_id) , len(output))
         
-    print(output)
-    print(org_df.head())
-    print(df.head())
+    # print(output)
+    # print(org_df.head())
+    # print(df.head())
     org_df['Sentiment']=matched_output
-    print(org_df.head())
+    # print(org_df.head())
     wordcloud_neg,wordcloud_neu,wordcloud_pos=genrate_wordcloud(org_df)
     
     

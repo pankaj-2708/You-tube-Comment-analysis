@@ -11,6 +11,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import base64
 import seaborn as sns
+import numpy as np
 
 load_dotenv()
 
@@ -404,9 +405,17 @@ def generate_trend_chart(df):
     df['date']=pd.to_datetime(df['date'])
     df['date']=df['date'].dt.date
     x=df.pivot_table(index='date',columns='output',aggfunc="size",values='output').fillna(0)
-    count_0=x[0]
-    count_1=x[1]
-    count_2=x[2]
+    
+    count_0=np.array([0 for _ in range(len(x))])
+    count_1=np.array([0 for _ in range(len(x))])
+    count_2=np.array([0 for _ in range(len(x))])
+    
+    if 0 in x.columns:
+        count_0=x[0]
+    if 1 in x.columns:
+        count_1=x[1]
+    if 2 in x.columns:
+        count_2=x[2]
     count_0=count_0.cumsum()
     count_1=count_1.cumsum()    
     count_2=count_2.cumsum()
