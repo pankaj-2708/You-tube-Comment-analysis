@@ -6,20 +6,21 @@ import yaml
 mlflow.set_tracking_uri("http://ec2-13-53-126-63.eu-north-1.compute.amazonaws.com:5000/")
 
 
-def register_best_model():
+def register_best_model(run_id):
     runs = mlflow.search_runs(experiment_names=["HYP tunning"])
     # print(runs.columns)
-    runs = runs[~runs["params.model"].isnull()]
-    runs.sort_values(by="metrics.accuracy", ascending=False, inplace=True)
-    best_run = runs.iloc[0]
-    best_run_id = best_run["run_id"]
+    # runs = runs[~runs["params.model"].isnull()]
+    # runs.sort_values(by="metrics.accuracy", ascending=False, inplace=True)
+    # best_run = runs.iloc[0]
+    # best_run_id = best_run["run_id"]
 
     # print("best_model_details")
     # print(best_run)
     # print(best_run["artifact_uri"])
 
+    best_run = runs[runs["run_id"] == run_id].iloc[0]
     model_name = f"best_model_{best_run['params.model']}"
-    run_id = best_run_id
+    # run_id = best_run_id
 
     # model in model uri come from the artifact path given while logging the model
     model_uri = f"runs:/{run_id}/model"
@@ -42,7 +43,7 @@ def main():
         params = yaml.safe_load(f)["register_model"]
 
     if params["register"]:
-        register_best_model()
+        register_best_model("bfabc812b80b45dc9f78b7d93fb878ef")
 
 
 if __name__ == "__main__":

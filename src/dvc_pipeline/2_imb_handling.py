@@ -19,13 +19,16 @@ def over_sample(df, over_sampling_method):
     
     new_X = None
     new_y = None
-    if over_sampling_method == "random":
+    if over_sampling_method.lower() == "random":
+        print("using random")
         rnd = RandomOverSampler(random_state=42)
         new_X, new_y = rnd.fit_resample(X, y)
         new_X.reset_index(drop=True, inplace=True)
         new_y.reset_index(drop=True, inplace=True)
 
     elif over_sampling_method == "SMOTE":
+        print("using smote")
+        print("using smote")
         rnd = SMOTE(random_state=42, k_neighbors=10)
         new_X, new_y = rnd.fit_resample(X, y)
         new_X.reset_index(drop=True, inplace=True)
@@ -49,10 +52,18 @@ def main():
 
     train = load_data(input_path / "train.csv")
     test = load_data(input_path / "test.csv")
+    
+    # train_not_vec = load_data(input_path / "train_not_vectorised.csv")
+    # test_not_vec = load_data(input_path / "test_not_vectorised.csv")
+    
     train = over_sample(train, params["over_sampling_tech"])
+    # train_not_vec = over_sample(train_not_vec, params["over_sampling_tech"])
 
     save_data(train, output_path / "train.csv")
     save_data(test, output_path / "test.csv")
+    
+    # save_data(train_not_vec, output_path / "train_not_vec.csv")
+    # save_data(test_not_vec, output_path / "test_not_vec.csv")
 
 
 if __name__ == "__main__":

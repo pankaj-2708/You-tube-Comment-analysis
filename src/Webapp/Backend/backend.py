@@ -14,8 +14,8 @@ from functools import lru_cache
 import tflite_runtime.interpreter as tflite
 
 # for windows
-# import tensorflow as tf
-# tflite = tf.lite
+import tensorflow as tf
+tflite = tf.lite
 
 app = FastAPI()
 
@@ -34,7 +34,8 @@ class custom_dtp(BaseModel):
 
 
 @lru_cache()
-def load_deps(run_id="58151a94895249a68b889a83a4e08dc2"):
+def load_deps(run_id="bfabc812b80b45dc9f78b7d93fb878ef"):
+    # ann oversampled model hyp tunned run id
     mlflow.set_tracking_uri("http://ec2-13-53-126-63.eu-north-1.compute.amazonaws.com:5000/")
 
     client = mlflow.tracking.MlflowClient()

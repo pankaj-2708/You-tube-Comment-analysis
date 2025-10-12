@@ -369,75 +369,87 @@ def preprocess_data(df, comment_len=True, word_count=True, char_per_words=True):
     return df
 
 def genrate_wordcloud(df):
-    sen=['negative','neutral','positive']
-    figs=[]
-    for s in sen:
-        if len(df[df["Sentiment"]==s])==0:
-            figs.append(None)
-            continue
-        plt.figure(figsize=(3,3))
-        wc=WordCloud(width=350, height=350).generate(" ".join(df[df["Sentiment"]==s]['Comment']))
-        plt.imshow(wc, interpolation='bilinear')
-        plt.axis('off')
-        plt.tight_layout()
-        plt.savefig(f'./images/{s}.png')
-        
-        with open(f"./images/{s}.png", "rb") as f:
-            encoded = base64.b64encode(f.read()).decode('utf-8')
-        figs.append(encoded)
-        
-    return figs
+    try:
+        sen=['negative','neutral','positive']
+        figs=[]
+        for s in sen:
+            if len(df[df["Sentiment"]==s])==0:
+                figs.append(None)
+                continue
+            plt.figure(figsize=(3,3))
+            wc=WordCloud(width=350, height=350).generate(" ".join(df[df["Sentiment"]==s]['Comment']))
+            plt.imshow(wc, interpolation='bilinear')
+            plt.axis('off')
+            plt.tight_layout()
+            plt.savefig(f'./images/{s}.png')
+            
+            with open(f"./images/{s}.png", "rb") as f:
+                encoded = base64.b64encode(f.read()).decode('utf-8')
+            figs.append(encoded)
+            
+        return figs
+    except Exception as e:
+        print("Error in wordcloud generation", e)
+        return [None,None,None]
 
 def generate_pie_chart(out):
-    out=list(out)
-    label=['negative' , 'neutral' , 'positive' ]
-    x=[out.count(0),out.count(1),out.count(2)]
-    plt.figure(figsize=(3,3))
-    plt.pie(x ,labels=label,autopct='%.2f%%')
-    plt.tight_layout()
-    plt.savefig(f'./images/pie.png')
-        
-    with open("images/pie.png", "rb") as f:
-        encoded = base64.b64encode(f.read()).decode('utf-8')    
-    return encoded
+    try:
+        out=list(out)
+        label=['negative' , 'neutral' , 'positive' ]
+        x=[out.count(0),out.count(1),out.count(2)]
+        plt.figure(figsize=(3,3))
+        plt.pie(x ,labels=label,autopct='%.2f%%')
+        plt.tight_layout()
+        plt.savefig(f'./images/pie.png')
+            
+        with open("images/pie.png", "rb") as f:
+            encoded = base64.b64encode(f.read()).decode('utf-8')    
+        return encoded
+    except Exception as e:
+        print("Error in pie chart generation", e)
+        return None
 
 def generate_trend_chart(df):
-    df['date']=pd.to_datetime(df['date'])
-    df['date']=df['date'].dt.date
-    x=df.pivot_table(index='date',columns='output',aggfunc="size",values='output').fillna(0)
-    
-    count_0=np.array([0 for _ in range(len(x))])
-    count_1=np.array([0 for _ in range(len(x))])
-    count_2=np.array([0 for _ in range(len(x))])
-    
-    if 0 in x.columns:
-        count_0=x[0]
-    if 1 in x.columns:
-        count_1=x[1]
-    if 2 in x.columns:
-        count_2=x[2]
-    count_0=count_0.cumsum()
-    count_1=count_1.cumsum()    
-    count_2=count_2.cumsum()
-    total=count_0+count_1+count_2
-    count_0=count_0/total
-    count_1=count_1/total
-    count_2=count_2/total
-    dates=x.index
-    plt.figure(figsize=(4,4.5))
-    sns.lineplot(x=dates,y=count_0,label='negative',color='red',markers='o')
-    sns.lineplot(x=dates,y=count_1,label='neutral',color='blue',markers='o')
-    sns.lineplot(x=dates,y=count_2,label='positive',color='green',markers='o')
-    # tilting x axis labels
-    plt.xticks(rotation=45)
-    plt.xlabel('Date')
-    plt.ylabel('Cumulative Percentage')
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(f'./images/trend.png')
-    with open("images/trend.png", "rb") as f:
-        encoded = base64.b64encode(f.read()).decode('utf-8')
-    return encoded
+    try:
+        df['date']=pd.to_datetime(df['date'])
+        df['date']=df['date'].dt.date
+        x=df.pivot_table(index='date',columns='output',aggfunc="size",values='output').fillna(0)
+        
+        count_0=np.array([0 for _ in range(len(x))])
+        count_1=np.array([0 for _ in range(len(x))])
+        count_2=np.array([0 for _ in range(len(x))])
+        
+        if 0 in x.columns:
+            count_0=x[0]
+        if 1 in x.columns:
+            count_1=x[1]
+        if 2 in x.columns:
+            count_2=x[2]
+        count_0=count_0.cumsum()
+        count_1=count_1.cumsum()    
+        count_2=count_2.cumsum()
+        total=count_0+count_1+count_2
+        count_0=count_0/total
+        count_1=count_1/total
+        count_2=count_2/total
+        dates=x.index
+        plt.figure(figsize=(4,4.5))
+        sns.lineplot(x=dates,y=count_0,label='negative',color='red',markers='o')
+        sns.lineplot(x=dates,y=count_1,label='neutral',color='blue',markers='o')
+        sns.lineplot(x=dates,y=count_2,label='positive',color='green',markers='o')
+        # tilting x axis labels
+        plt.xticks(rotation=45)
+        plt.xlabel('Date')
+        plt.ylabel('Cumulative Percentage')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'./images/trend.png')
+        with open("images/trend.png", "rb") as f:
+            encoded = base64.b64encode(f.read()).decode('utf-8')
+        return encoded
+    except Exception as e:
+        print("Error in trend chart generation", e)
+        return None
 
 # aiohttp is faster than requests even for single request due to connection pooling and reuse
 # like requests reopens a new connection for every request which is slow and inefficient aiohttp reuses the same connection for multiple requests which is fast and efficient
