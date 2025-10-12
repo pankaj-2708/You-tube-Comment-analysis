@@ -138,7 +138,7 @@ jobs:
           id: login-ecr
           uses: aws-actions/amazon-ecr-login@v2
           
-        - name: run docker compose
+        - name: run docker image
           env:
             ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
             ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
@@ -150,3 +150,27 @@ jobs:
           run: |
             docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
             timeout 600 docker run -p 8000:8000 -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e YT_API_KEY=$YT_API_KEY $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG || true
+
+        # - name: running kubernetes
+        #   env:
+        #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        #     ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+        #     IMAGE_TAG: latest
+        #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        #     AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        #     YT_API_KEY: ${{ secrets.YT_API_KEY }}
+
+        #   run: |
+
+        #     kubectl create secret docker-registry ecr-secret --docker-server=$ECR_REGISTRY --docker-username=AWS --docker-password="$(aws ecr get-login-password --region $AWS_DEFAULT_REGION)"
+        #     kubectl create secret generic aws-secrets --from-literal=AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --from-literal=AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY --from-literal=AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION --from-literal=YT_API_KEY=$YT_API_KEY
+
+        #     kubectl apply -f deployment.yaml
+        #     kubectl apply -f service.yaml
+
+        #     echo "Deployment is running for 10 minutes..."
+        #     sleep 600  # 600 seconds = 10 minutes
+
+        #     echo "Deleting deployment after 10 minutes..."
+        #     kubectl delete deployment yt-backend

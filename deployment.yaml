@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yt-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: yt-backend
+  template:
+    metadata:
+      labels:
+        app: yt-backend
+    spec:
+      containers:
+      - name: yt-backend
+        image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        resources:
+          limits:
+            memory: "400Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 8000
+
+        # these are secrets that are required inside docker container for pulling model using mlflow
+        envFrom:
+          - secretRef:
+              name: aws-secrets
+
+      imagePullSecrets:
+        - name: ecr-secret
+## run below commands in bash
+## for ecr-secret
+# creating secret -> run these commands before running kubernets apply command
+# we need to pull image from ecr which require authentication
+
+# aws ecr get-login-password --region eu-north-1  ->this command Uses your AWS Access Key and Secret Key from your local credentials 
+# to generate a base64-encoded authorization token that is valid for 12 hours (must be logged in to aws in machine from where you are 
+# doing this)
+
+# kubectl create secret docker-registry ecr-secret --docker-server=871762482261.dkr.ecr.eu-north-1.amazonaws.com --docker-username=AWS --docker-password="$(aws ecr get-login-password --region eu-north-1)"
+# this 871762482261.dkr.ecr.eu-north-1.amazonaws.com is the ecr repo address this command stores those credentials in Kubernetes. later used to acess image
+# verify your secrets by this command - > kubectl get secret ecr-secret -o jsonpath="{.data.\.dockerconfigjson}" | base64 --decode
+# delete secret by this command -> kubectl delete secret ecr-secret
+
+## for aws-secrets run below command to mount your id and secrets (orignally mounted using  -> docker run -p 8000:8000 -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e YT_API_KEY=$YT_API_KEY $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG)
+# kubectl create secret generic aws-secrets --from-literal=AWS_ACCESS_KEY_ID=<your-key-id> --from-literal=AWS_SECRET_ACCESS_KEY=<your-secret> --from-literal=AWS_DEFAULT_REGION=ap-south-1 --from-literal=YT_API_KEY=<your api key>
+# verify your secrets by this command (relace env name for each secret)- > kubectl get secret aws-secrets -o jsonpath="{.data.AWS_ACCESS_KEY_ID}" | base64 --decode

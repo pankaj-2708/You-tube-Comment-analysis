@@ -43,7 +43,7 @@ def main():
         params = yaml.safe_load(f)["register_model"]
 
     if params["register"]:
-        register_best_model("bfabc812b80b45dc9f78b7d93fb878ef")
+        register_best_model("7aacaf0572f0419196f5095d4f1dc11c")
 
 
 if __name__ == "__main__":
