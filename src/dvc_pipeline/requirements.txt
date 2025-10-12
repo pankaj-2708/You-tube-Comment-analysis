@@ -16,6 +16,6 @@ scikit_learn==1.7.2
 seaborn==0.13.2
 tensorflow==2.20.0
 xgboost==3.0.5
-dvc
 boto3
-dvc_s3
+dvc[s3]
+kaleido

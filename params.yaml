@@ -26,5 +26,5 @@ register_model:
 
 model_report:
   best_model_name: best_model_ann
-  best_model_version: 2
+  best_model_version: 4
   generate_report: True

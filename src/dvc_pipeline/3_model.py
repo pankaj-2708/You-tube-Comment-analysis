@@ -189,58 +189,61 @@ def tune_xgb(X, y, test_X, test_Y, home_dir,output_path):
 
 
 def tune_rf(X, y, test_X, test_Y, home_dir,output_path):
-    import plotly.express as px
-    from optuna.visualization import plot_optimization_history, plot_slice, plot_param_importances
-    from sklearn.metrics import accuracy_score, confusion_matrix
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.model_selection import cross_val_score
+    try:
+        import plotly.express as px
+        from optuna.visualization import plot_optimization_history, plot_slice, plot_param_importances
+        from sklearn.metrics import accuracy_score, confusion_matrix
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.model_selection import cross_val_score
 
-    study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler())
+        study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler())
 
-    study.optimize(objective_RF, n_trials=2)
+        study.optimize(objective_RF, n_trials=2)
 
-    best_trial = study.best_trial
+        best_trial = study.best_trial
 
-    with mlflow.start_run():
-        mlflow.log_param("type_of_model", "ml")
-        mlflow.log_param("model", "random_forest_tunned")
-        for trial in study.get_trials():
-            with mlflow.start_run(nested=True):
-                j = {k: str(v) for k, v in trial.params.items()}
-                mlflow.log_params(j)
-                mlflow.log_metric(key="accuracy", value=float(trial.value))
+        with mlflow.start_run():
+            mlflow.log_param("type_of_model", "ml")
+            mlflow.log_param("model", "random_forest_tunned")
+            for trial in study.get_trials():
+                with mlflow.start_run(nested=True):
+                    j = {k: str(v) for k, v in trial.params.items()}
+                    mlflow.log_params(j)
+                    mlflow.log_metric(key="accuracy", value=float(trial.value))
 
-        for key, value in best_trial.params.items():
-            mlflow.log_param(key, value)
+            for key, value in best_trial.params.items():
+                mlflow.log_param(key, value)
 
-        model_ = RandomForestClassifier(**best_trial.params, random_state=42)
+            model_ = RandomForestClassifier(**best_trial.params, random_state=42)
 
-        model_.fit(X, y)
-        mlflow.sklearn.log_model(model_, artifact_path="model")
-        with open(output_path / "model.pkl", "wb") as f:
-            import joblib
+            model_.fit(X, y)
+            mlflow.sklearn.log_model(model_, artifact_path="model")
+            with open(output_path / "model.pkl", "wb") as f:
+                import joblib
 
-            joblib.dump(model_, f)
-        # also logging model in pickle format for easy loading
-        mlflow.log_artifact(output_path / "model.pkl")
-        pred_y = model_.predict(test_X)
-        pred_y_train = model_.predict(X)
-        confusion_matrix(test_Y, pred_y)
+                joblib.dump(model_, f)
+            # also logging model in pickle format for easy loading
+            mlflow.log_artifact(output_path / "model.pkl")
+            pred_y = model_.predict(test_X)
+            pred_y_train = model_.predict(X)
+            confusion_matrix(test_Y, pred_y)
 
-        mlflow.log_artifact(home_dir / "data" / "train_test_split" / "vectoriser.pkl")
-        mlflow.log_artifact(home_dir / "data" / "train_test_split" / "clm_trans.pkl")
-        mlflow.log_metric("accuracy", accuracy_score(test_Y, pred_y))
-        mlflow.log_metric("accuracy_train", accuracy_score(pred_y_train, y))
+            mlflow.log_artifact(home_dir / "data" / "train_test_split" / "vectoriser.pkl")
+            mlflow.log_artifact(home_dir / "data" / "train_test_split" / "clm_trans.pkl")
+            mlflow.log_metric("accuracy", accuracy_score(test_Y, pred_y))
+            mlflow.log_metric("accuracy_train", accuracy_score(pred_y_train, y))
 
-        fig = px.imshow(confusion_matrix(test_Y, pred_y), text_auto=True)
-        mlflow.log_figure(fig, "confusion_mat.png")
-        fig = plot_optimization_history(study)
-        mlflow.log_figure(fig, "optuna_optimization_history.png")
-        fig = plot_param_importances(study)
-        mlflow.log_figure(fig, "optuna_param_importance.png")
-        fig = plot_slice(study)
-        mlflow.log_figure(fig, "optuna_plot_slice.png")
-
+            fig = px.imshow(confusion_matrix(test_Y, pred_y), text_auto=True)
+            mlflow.log_figure(fig, "confusion_mat.png")
+            fig = plot_optimization_history(study)
+            mlflow.log_figure(fig, "optuna_optimization_history.png")
+            fig = plot_param_importances(study)
+            mlflow.log_figure(fig, "optuna_param_importance.png")
+            fig = plot_slice(study)
+            mlflow.log_figure(fig, "optuna_plot_slice.png")
+    except Exception as e:
+        print(e)
+        print("error in tuning rf")
 
 def main():
     curr_path = Path(__file__)
